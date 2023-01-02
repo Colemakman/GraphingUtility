@@ -1,0 +1,10 @@
+- Add renaming nodes // DONE
+- Add resetting area // DONE
+- Add database implementation // DOING
+- Djikstras // DONE
+- BFS // DONE
+- DFS // DONE
+- In/Post/Pre order traversal
+- import graphs JSON parsing
+
+Good job me
