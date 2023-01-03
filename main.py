@@ -1,11 +1,13 @@
 from tkinter import *
 import sqlite3
-
+import json
+import ast
 
 # Constants for GUI dimensions. Should rarely be changed.
 SCREEN_X = 1280 
 SCREEN_Y = 760
 WINDOW_TITLE = 'Graphing Utility'
+BACKGROUND_COLOUR = 'red'
 
 global root
 root = Tk()
@@ -94,10 +96,89 @@ class Graph():
         self.save_to_database_button = Button(root, text="Save to database", command=lambda: self.saveToDatabase())
         self.save_to_database_button.place(x=1150, y=650)
 
+        self.imported = False
+
+        # Connect to the database
+        conn = sqlite3.connect('graphs.db')
+
+        # Create a cursor
+        cursor = conn.cursor()
+
+        # Select all the rows from the table
+        cursor.execute('SELECT * FROM graphs')
+
+        # Get the rows from the database
+        self.rows = cursor.fetchall()
+
+        # Close the connection
+        conn.close()
+
+        # Create the dropdown menu
+        self.ImportVar = StringVar(root)
+        self.dropdown = OptionMenu(root, self.ImportVar, *[row[2] for row in self.rows])
+        self.dropdown.place(x=1150, y=400)
+
+        self.confirm_import = Button(root, text='Confirm Import', command=lambda: self.importGraph(self.ImportVar.get()))
+        self.confirm_import.place(x=1150, y=450)
+
+    def importGraph(self, name):
+
+        self.reset()
+
+        self.imported = True
+
+        index = 0
+        for row in self.rows:
+            if name in row:
+                index = self.rows.index(row)
+
+        this_graph = self.rows[index]
+        print('RIESNTIRNTIAREIARN', (this_graph[0]), type(this_graph[0]))
+        self.adjacency_list = ast.literal_eval(this_graph[0])
+
+        self.title = this_graph[2]
+        self.nodes = ast.literal_eval(this_graph[3])
+        print(self.nodes)
+
+        print('adjacency list = ', self.adjacency_list, type(self.adjacency_list))
+        print('title = ', self.title, type(self.title))
+        print('nodes = ', self.nodes, type(self.nodes))
+
+        count = len(self.nodes)
+        print("count:", count)
+
+        for i in range(count):
+            self.addNode(x=self.nodes[i][0], y=self.nodes[i][1])
+
+        self.nodes = self.nodes[:count]
+
+        print(self.nodes)
+
+        for i in range(len(self.nodes)-1):
+            print("NODE COUNT:", len(self.nodes))
+            print(self.nodes)
+            self.renameNode(i+1, self.nodes[i][2]) 
+
+        for k,v in self.adjacency_list.items():
+            for node in v:
+                self.addConnection(k[0], node[0])
+
+        for k,v in self.adjacency_list.items():
+            for node in v:
+                if isinstance(node, list) and len(node) == 2:
+                    self.addWeight(k[0], node[0], node[1])
+                    print(k[0], node[0], node[1])
+                    print('weight added')
+
+
+
     def reset(self):
 
         for label in self.node_labels:
             label.destroy()
+
+        for weight in self.weight_labels:
+            weight.destroy()
 
         # Create title input area above node creation zone.
         self.title_label = Label(root, text="Title: ").place(x=200, y=25) 
@@ -157,6 +238,31 @@ class Graph():
         self.save_to_database_button = Button(root, text="Save to database", command=lambda: self.saveToDatabase())
         self.save_to_database_button.place(x=1150, y=650)
 
+        self.imported = False
+
+                # Connect to the database
+        conn = sqlite3.connect('graphs.db')
+
+        # Create a cursor
+        cursor = conn.cursor()
+
+        # Select all the rows from the table
+        cursor.execute('SELECT * FROM graphs')
+
+        # Get the rows from the database
+        self.rows = cursor.fetchall()
+
+        # Close the connection
+        conn.close()
+
+        # Create the dropdown menu
+        self.ImportVar = StringVar(root)
+        self.dropdown = OptionMenu(root, self.ImportVar, *[row[2] for row in self.rows])
+        self.dropdown.place(x=1150, y=400)
+
+        self.confirm_import = Button(root, text='Confirm Import', command=lambda: self.importGraph(self.ImportVar.get()))
+        self.confirm_import.place(x=1150, y=450)
+
         canvas.delete(ALL)
 
         main_area = canvas.create_rectangle(50,50,700,700,outline="black", fill="white", width=2) # Create area for graph creation.
@@ -169,10 +275,9 @@ class Graph():
         # Create a cursor
         cursor = conn.cursor()
 
-        print(self.adjacency_list, self.getTitle())
-
         # Insert the dictionary and string into the "graphs" table 
-        cursor.execute('''INSERT INTO graphs (data, name) VALUES (?, ?)''', (str(self.adjacency_list), self.getTitle()))
+        cursor.execute('''INSERT INTO graphs (data, positions, name) VALUES (?, ?, ?)''', (str(self.adjacency_list), str(self.nodes), self.getTitle()))
+        ## FIXXXXXXXXXXX
 
         # Commit the transaction
         conn.commit()
@@ -274,6 +379,8 @@ class Graph():
         self.title = t
 
     def renameNode(self, node, name):
+        print(len(self.node_labels), 'NODE LABELS')
+        print(int(node)-1, 'NODE-1')
         label = self.node_labels[int(node) - 1]
         label.config(text=("{index}: {name}".format(index=int(node), name=name)))
 
@@ -448,11 +555,20 @@ class Graph():
         head, tail = str(head), str(tail)
 
         # if it is not directed
-        if tail in self.adjacency_list[head] and head in self.adjacency_list[tail]:
-            self.adjacency_list[head][self.adjacency_list[head].index(tail)] = [tail, int(weight)]
-            self.adjacency_list[tail][self.adjacency_list[tail].index(head)] = [head, int(weight)]
+        if not self.imported:
+            if tail in self.adjacency_list[head] and head in self.adjacency_list[tail]:
+                self.adjacency_list[head][self.adjacency_list[head].index(tail)] = [tail, int(weight)]
+                self.adjacency_list[tail][self.adjacency_list[tail].index(head)] = [head, int(weight)]
 
 
+                x1, y1, x2, y2 = self.nodes[int(head)-1][0], self.nodes[int(head)-1][1], self.nodes[int(tail)-1][0], self.nodes[int(tail)-1][1]
+                mid = self.getMidpoint(x1,y1,x2,y2)
+
+                weight_label = Label(root, text=weight, font=("Helvetica", 16, "bold"), fg="blue")
+                weight_label.place(x=mid[0], y=mid[1])
+                self.weight_labels.append(weight_label)
+
+        else:
             x1, y1, x2, y2 = self.nodes[int(head)-1][0], self.nodes[int(head)-1][1], self.nodes[int(tail)-1][0], self.nodes[int(tail)-1][1]
             mid = self.getMidpoint(x1,y1,x2,y2)
 
@@ -478,21 +594,22 @@ class Graph():
 
     def addConnection(self, start, end, directed=False):
 
-        # adds connections to adjacency list
-        if str(start) in self.adjacency_list.keys():
-            self.adjacency_list[start].append(end)
-        else:
-            self.adjacency_list[start] = [end]
-        
-        if not directed:
-            if str(end) in self.adjacency_list.keys():
-                self.adjacency_list[end].append(start)
+        if not self.imported:
+            # adds connections to adjacency list
+            if str(start) in self.adjacency_list.keys():
+                self.adjacency_list[start].append(end)
             else:
-                self.adjacency_list[end] = [start]
+                self.adjacency_list[start] = [end]
+            
+            if not directed:
+                if str(end) in self.adjacency_list.keys():
+                    self.adjacency_list[end].append(start)
+                else:
+                    self.adjacency_list[end] = [start]
 
-        # remove duplicate entries 
-        for k,v in self.adjacency_list.items():
-            self.adjacency_list[k] = list(set(v))
+            # remove duplicate entries 
+            for k,v in self.adjacency_list.items():
+                self.adjacency_list[k] = list(set(v))
 
         print(self.adjacency_list)
 
@@ -524,7 +641,7 @@ class Graph():
             self.nodes.append(new_node_node)
             self.node_labels.append(new_node.getLabel())
             self.node_circles.append(new_node.getCircle())
-        print(self.nodes)
+        #print(self.nodes)
 
     def startCreatingNodes(self):
         root.bind('<Button-1>', lambda e: self.addNode(getX(e), getY(e)))
@@ -572,9 +689,24 @@ class Node():
 
 canvas.pack()
 
-
 def main():
     graph1 = Graph(title='Graph 1')
+
+# Connect to the database
+conn = sqlite3.connect('graphs.db')
+
+# Create a cursor
+cursor = conn.cursor()
+
+# Select all the rows from the table
+cursor.execute('SELECT * FROM graphs')
+
+# Print the rows
+print(cursor.fetchall())
+
+# Close the connection
+conn.close()
+
 
 
 
