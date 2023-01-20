@@ -18,4 +18,10 @@ Features:
 - Save to database
 - Import from database
 
+Usage:
+
+1. Open in Visual Studio Code
+2. Run create_table.py
+3. Run main.py
+
 Made for AQA A level Computer Science NEA
