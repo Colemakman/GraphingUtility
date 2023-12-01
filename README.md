@@ -20,8 +20,7 @@ Features:
 
 Usage:
 
-1. Open in Visual Studio Code
-2. Run create_table.py
-3. Run main.py
+1. Run create_table.py
+2. Run main.py
 
-Made for AQA A level Computer Science NEA
+
