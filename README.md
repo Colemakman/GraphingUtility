@@ -32,5 +32,3 @@ Usage:
 5. Run main.py
    ```bash
    python3 main.py
-
-
