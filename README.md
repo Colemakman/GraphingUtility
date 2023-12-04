@@ -20,7 +20,17 @@ Features:
 
 Usage:
 
-1. Run create_table.py
-2. Run main.py
+1. Clone this repo
+2. ```bash
+   cd ~/GraphingUtility
+3. Install dependencies
+   ```bash
+   pip install -r ./requirements.txt
+4. Run create_table.py
+   ```bash
+   python3 ./create_table.py
+5. Run main.py
+   ```bash
+   python3 main.py
 
 
