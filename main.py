@@ -6,8 +6,12 @@ import os
 # Constants for GUI dimensions. Should rarely be changed.
 SCREEN_X = 1280 
 SCREEN_Y = 760
+
 WINDOW_TITLE = 'Graphing Utility'
-LOGO_PATH = 'GraphingUtility-main/icon.ico'
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+ico_filename = 'icon.png'
+LOGO_PATH = os.path.join(script_dir, ico_filename)
 
 
 global root
@@ -15,7 +19,9 @@ root = Tk()
 root.geometry('{X}x{Y}'.format(X=SCREEN_X, Y=SCREEN_Y)) 
 root.resizable(False,False) # Make it unable to resize, important for the code to work as relies on absolute values.
 root.title(WINDOW_TITLE)
-root.wm_iconbitmap(LOGO_PATH)
+icon_image = PhotoImage(file=LOGO_PATH)
+root.iconphoto(True, icon_image)
+
 
 canvas = Canvas()   
 main_area = canvas.create_rectangle(50,50,700,700,outline="black", fill="white", width=2) # Create area for graph creation.
@@ -135,32 +141,21 @@ class Graph():
                 index = self.rows.index(row)
 
         this_graph = self.rows[index]
-        print('RIESNTIRNTIAREIARN', (this_graph[0]), type(this_graph[0]))
-        print("THIS GRAPH:", this_graph)
-        print("THIS TITLE TITLE", this_graph[-1])
         self.adjacency_list = ast.literal_eval(this_graph[1])
 
         self.title = this_graph[-1]
         self.nodes = ast.literal_eval(this_graph[2])
-        print(self.nodes)
 
-        print('adjacency list = ', self.adjacency_list, type(self.adjacency_list))
-        print('title = ', self.title, type(self.title))
-        print('nodes = ', self.nodes, type(self.nodes))
 
         count = len(self.nodes)
-        print("count:", count)
 
         for i in range(count):
             self.addNode(x=self.nodes[i][0], y=self.nodes[i][1])
 
         self.nodes = self.nodes[:count]
 
-        print(self.nodes)
 
         for i in range(len(self.nodes)-1):
-            print("NODE COUNT:", len(self.nodes))
-            print(self.nodes)
             self.renameNode(i+1, self.nodes[i][2]) 
 
         for k,v in self.adjacency_list.items():
@@ -171,8 +166,6 @@ class Graph():
             for node in v:
                 if isinstance(node, list) and len(node) == 2:
                     self.addWeight(k[0], node[0], node[1])
-                    print(k[0], node[0], node[1])
-                    print('weight added')
 
 
 
@@ -278,7 +271,6 @@ class Graph():
 
         cursor.execute("SELECT COUNT(*) FROM graphs")
         result = cursor.fetchone()
-        print('RESULTSETNSETNTEN', result)
 
         cursor.execute('''INSERT INTO users (userId, graphId) VALUES (?, ?)''', (os.getlogin(), str(result[0])))
         cursor.execute('''INSERT INTO graphs (data, position, name, graphId) VALUES (?, ?, ?, ?)''', (str(self.adjacency_list), str(self.nodes), self.getTitle(), str(result[0])))
@@ -303,10 +295,6 @@ class Graph():
 
         # Fetch the rows
         rows = cursor.fetchall()
-
-        # Print the rows
-        for row in rows:
-            print(row)
 
         # Close the connection
         conn.close()
@@ -383,8 +371,6 @@ class Graph():
         self.title = t
 
     def renameNode(self, node, name):
-        print(len(self.node_labels), 'NODE LABELS')
-        print(int(node)-1, 'NODE-1')
         label = self.node_labels[int(node) - 1]
         label.config(text=("{index}: {name}".format(index=int(node), name=name)))
 
@@ -615,7 +601,6 @@ class Graph():
             for k,v in self.adjacency_list.items():
                 self.adjacency_list[k] = list(set(v))
 
-        print(self.adjacency_list)
 
         hPointer = int(start) - 1
         tPointer = int(end) - 1
@@ -645,7 +630,6 @@ class Graph():
             self.nodes.append(new_node_node)
             self.node_labels.append(new_node.getLabel())
             self.node_circles.append(new_node.getCircle())
-        #print(self.nodes)
 
     def startCreatingNodes(self):
         root.bind('<Button-1>', lambda e: self.addNode(getX(e), getY(e)))
