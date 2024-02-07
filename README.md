@@ -4,6 +4,7 @@ Make and create graphs.
 
 Features:
 
+- Full GUI
 - Node creation
 - Edge creation
 - Weighted edge creation
